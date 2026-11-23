@@ -9,6 +9,14 @@ YAO FITNESS — LOCAL BACKEND SETUP
 EASIEST:
 Double-click START-YAO-FITNESS.bat
 
+PUBLIC WEBSITE
+The free public website is hosted on GitHub Pages:
+https://yao-ui21.github.io/Yao/
+
+The website saves workout and nutrition data in this browser only. Data does not
+sync between devices or browsers, and cloud accounts are not enabled there.
+Use the local backend setup above for local server persistence.
+
 If PowerShell says npm.ps1 is blocked, use Command Prompt (cmd.exe), not PowerShell.
 
 The app includes:

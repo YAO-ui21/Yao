@@ -1079,18 +1079,24 @@ function isValidNutritionDate(value){
     return !Number.isNaN(date.getTime()) && localDateKey(date) === value;
 }
 
+function isGitHubPages(){
+    return window.location.hostname.endsWith(".github.io");
+}
+
 async function loadInitialState(){
     document.body.classList.remove("locked-auth");
     document.body.classList.add("authenticated");
 
-    try{
-        const response = await fetch("/api/state", { cache: "no-store" });
-        if(response.ok){
-            const savedState = await response.json();
-            state = normalizeState(savedState);
+    if(!isGitHubPages()){
+        try{
+            const response = await fetch("/api/state", { cache: "no-store" });
+            if(response.ok){
+                const savedState = await response.json();
+                state = normalizeState(savedState);
+            }
+        }catch(error){
+            console.warn("Could not load saved state from server; using local storage fallback.", error);
         }
-    }catch(error){
-        console.warn("Could not load saved state from server; using local storage fallback.", error);
     }
 
     try{
@@ -1148,13 +1154,15 @@ function saveState(){
         return;
     }
 
-    fetch("/api/state", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(snapshot)
-    }).catch(error => {
-        console.warn("Server sync failed; local storage retained the latest data.", error);
-    });
+    if(!isGitHubPages()){
+        fetch("/api/state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(snapshot)
+        }).catch(error => {
+            console.warn("Server sync failed; local storage retained the latest data.", error);
+        });
+    }
 }
 
 
@@ -3789,6 +3797,15 @@ async function loadAuthenticatedState(user){
 }
 
 async function initializeSupabaseAuth(){
+    if(isGitHubPages()){
+        const accountButton = document.getElementById("openAuthModalBtn");
+        const tagline = document.querySelector(".tagline");
+        if(accountButton) accountButton.hidden = true;
+        if(tagline) tagline.textContent = "Free web edition · Your workouts and food logs are saved in this browser only.";
+        loadInitialState();
+        return;
+    }
+
     const authForm = document.getElementById("authForm");
     const signInModeButton = document.getElementById("signInModeButton");
     const signUpModeButton = document.getElementById("signUpModeButton");

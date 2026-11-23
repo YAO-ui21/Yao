@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<meta name="description" content="YAO FITNESS — build workouts, track lifts, log nutrition, and follow your training progress.">
+<title>Fitness YAO — Train Hard · Track Everything</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,500;1,600&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- AUTH GATE (FROSTED SHEET) -->
+<section class="auth-gate" id="authGate" aria-labelledby="authTitle" hidden>
+    <div class="auth-card">
+        <button type="button" class="auth-close-btn" onclick="toggleAuthModal(false)" aria-label="Close sign in dialog">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+
+        <div class="drag-handle-pill" aria-hidden="true"></div>
+
+        <div class="brand-badge" style="margin-bottom:12px;">
+            <span class="brand-dot"></span>
+            <span>Fitness Cloud</span>
+        </div>
+
+        <h1 id="authTitle">Sign in for Fitness Success</h1>
+        <p class="sub" style="margin-bottom:18px;">Fuel your fitness journey with cloud sync for every workout, lift and PR you log.</p>
+
+        <div class="auth-mode-tabs" role="group" aria-label="Account mode">
+            <button type="button" id="signInModeButton" aria-pressed="true">Sign in</button>
+            <button type="button" id="signUpModeButton" aria-pressed="false">Create account</button>
+        </div>
+
+        <form id="authForm" class="auth-form">
+            <label for="authEmailInput">Email</label>
+            <input id="authEmailInput" type="email" autocomplete="email" required placeholder="athlete@fitness.com">
+            <label for="authPassword">Password</label>
+            <input id="authPassword" type="password" autocomplete="current-password" minlength="6" required placeholder="••••••••">
+
+            <button class="primary full-width" id="authSubmitButton" type="submit">
+                <span id="authSubmitLabel">Sign in</span>
+                <span class="btn-arrow-circle" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </button>
+        </form>
+        <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
+    </div>
+</section>
+
+<!-- BACKGROUND PARTICLES -->
+<div id="particles" aria-hidden="true"></div>
+
+<!-- MAIN APPLICATION WRAPPER -->
+<div class="wrap">
+
+    <header>
+        <div class="header-top-bar">
+            <div class="greeting-block">
+                <div class="greeting-title">Hi Athlete, Welcome!</div>
+                <div class="greeting-sub">Fitness // Train Hard · Track Everything</div>
+            </div>
+
+            <div class="header-actions-right">
+                <div id="authAccount" class="auth-account" hidden>
+                    <span id="authAccountEmail">athlete@fitness.com</span>
+                    <span id="authSaveStatus" class="save-status">Saved</span>
+                    <button type="button" id="signOutButton" class="ghost small">Sign out</button>
+                </div>
+
+                <button type="button" class="icon-btn-glass" id="openAuthModalBtn" onclick="toggleAuthModal(true)" aria-label="Account and cloud sync" title="Account / Sign In">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+
+                <button type="button" class="icon-btn-glass" onclick="switchTab('dashboard')" aria-label="Home dashboard" title="Dashboard">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="brand-badge">
+            <span class="brand-dot"></span>
+            <span>Fitness Performance System</span>
+        </div>
+
+        <h1 class="rgb-title">YAO FITNESS</h1>
+
+        <p class="tagline">Your program. Your progress. Your next PR.</p>
+
+        <div class="streak-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <span>Current streak:</span>
+            <b id="badgeStreak">0 days</b>
+        </div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Main navigation">
+        <button class="active" data-tab="dashboard" role="tab" aria-selected="true" type="button">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+            <span>Dashboard</span>
+        </button>
+        <button data-tab="workout" role="tab" aria-selected="false" type="button">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
+            <span>Workout</span>
+        </button>
+        <button data-tab="exercises" role="tab" aria-selected="false" type="button">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/></svg>
+            <span>Exercises</span>
+        </button>
+        <button data-tab="track" role="tab" aria-selected="false" type="button">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-5 5"/></svg>
+            <span>Track Progress</span>
+        </button>
+        <button data-tab="nutrition" role="tab" aria-selected="false" type="button">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 8h14M7 8c0 3 2 5 5 5s5-2 5-5M8 16h8"/></svg>
+            <span>Nutrition</span>
+        </button>
+        <button data-tab="streaks" role="tab" aria-selected="false" type="button">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <span>Streaks</span>
+        </button>
+        <button data-tab="feedback" role="tab" aria-selected="false" type="button">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Feedback</span>
+        </button>
+    </nav>
+
+    <!-- 1. DASHBOARD -->
+    <section class="panel active" id="panel-dashboard" role="tabpanel" aria-label="Dashboard overview">
+
+        <div class="quote">
+            <div class="quote-header">
+                <span class="quote-tag">TODAY'S REMINDER</span>
+                <span class="quote-icon" aria-hidden="true">“</span>
+            </div>
+            <div class="quote-text" id="dailyQuote">You don't need motivation. You need consistency.</div>
+        </div>
+
+        <div>
+            <div class="card-header-flex" style="margin-bottom:12px;">
+                <div>
+                    <h2>My Health & Performance</h2>
+                    <div class="sub">Key metrics across logged lifts, routine items, streak and PRs.</div>
+                </div>
+                <button type="button" class="ghost small" onclick="switchTab('workout')">+ Add Routine</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat orange">
+                    <div class="stat-top">
+                        <span class="stat-label">Training Sessions</span>
+                        <div class="stat-icon-circle" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statWorkouts">0</div>
+                    <div class="stat-meta">Days with logged work</div>
+                </div>
+
+                <div class="stat green">
+                    <div class="stat-top">
+                        <span class="stat-label">Exercises</span>
+                        <div class="stat-icon-circle" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statExercises">0</div>
+                    <div class="stat-meta">Programmed moves</div>
+                </div>
+
+                <div class="stat blue">
+                    <div class="stat-top">
+                        <span class="stat-label">Current Streak</span>
+                        <div class="stat-icon-circle" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statStreak">0</div>
+                    <div class="stat-meta">Consecutive days</div>
+                </div>
+
+                <div class="stat purple">
+                    <div class="stat-top">
+                        <span class="stat-label">Personal Records</span>
+                        <div class="stat-icon-circle" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17a2 2 0 0 0-2 2v1h8v-1a2 2 0 0 0-2-2v-2.34"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="statPR">0</div>
+                    <div class="stat-meta">All-time PR marks</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="momentum-card">
+            <div class="momentum-copy">
+                <div class="mini-label">
+                    <span class="pulse-dot" aria-hidden="true"></span>
+                    <span>Momentum</span>
+                </div>
+                <h3 id="momentumHeadline">Your plan is in motion.</h3>
+                <p id="momentumText">Stay consistent and lock in your next session.</p>
+            </div>
+            <div class="momentum-actions">
+                <button class="primary" type="button" onclick="switchTab('workout')">
+                    <span>Build Workout</span>
+                    <span class="btn-arrow-circle" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </span>
+                </button>
+                <button class="ghost" type="button" onclick="switchTab('track')">Log Lift</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card dashboard-card-today">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Today's Workout</h2>
+                        <div class="sub">Your programmed exercises for today.</div>
+                    </div>
+                    <button class="ghost small" type="button" onclick="switchTab('workout')">Manage Routine →</button>
+                </div>
+                <div id="todayWorkout"></div>
+            </div>
+
+            <div class="card dashboard-card-side">
+                <div class="card-header">
+                    <div>
+                        <h2>Quick Training Hub</h2>
+                        <div class="sub">Direct access to your routine and live tracking.</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions-box">
+                    <button class="primary full-width" type="button" onclick="switchTab('workout')">
+                        <span>Start Training Session</span>
+                        <span class="btn-arrow-circle" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+
+                    <button class="ghost full-width" type="button" onclick="switchTab('track')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-5 5"/></svg>
+                        <span>Open Progress Tracker</span>
+                    </button>
+
+                    <div class="quick-stats-strip">
+                        <div class="quick-stat-item">
+                            <span class="quick-stat-sub">Active Routine</span>
+                            <strong class="quick-stat-num" id="quickActiveCount">Ready</strong>
+                        </div>
+                        <div class="quick-stat-item">
+                            <span class="quick-stat-sub">Streak State</span>
+                            <strong class="quick-stat-num" id="quickStreakState">Active</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+<!-- 2. WORKOUT BUILDER -->
+    <section class="panel" id="panel-workout" role="tabpanel" aria-label="Workout builder">
+        <div class="card">
+            <div class="card-header-flex">
+                <div>
+                    <h2>Build Your Workout</h2>
+                    <div class="sub">Choose a built-in program or create your own muscle-targeted workout.</div>
+                </div>
+
+                <div class="workout-mode" role="group" aria-label="Workout program mode">
+                    <button class="mode-btn active" data-mode="custom" aria-pressed="true" type="button">My Workout</button>
+                    <button class="mode-btn" data-mode="builtin" aria-pressed="false" type="button">Training Programs</button>
+                </div>
+            </div>
+
+            <div id="customWorkoutView">
+                <div class="day-tabs-wrapper">
+                    <div class="day-tabs" id="dayTabs"></div>
+                </div>
+
+                <div class="workout-builder-section">
+                    <div class="section-top">
+                        <div>
+                            <h3 class="section-title">Target Muscle Groups</h3>
+                            <div class="sub">Select muscles to build a routine for <strong id="targetDayLabel" style="color:var(--accent);">this day</strong>.</div>
+                        </div>
+                        <span class="muscle-count-pill" id="muscleCountBadge">0 selected</span>
+                    </div>
+
+                    <div class="muscle-grid" id="muscleSelector"></div>
+
+                    <div class="builder-actions">
+                        <button class="primary" id="findExercisesBtn" type="button">
+                            <span>Find Exercises</span>
+                            <span class="btn-arrow-circle" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </span>
+                        </button>
+                        <button class="ghost" id="clearMusclesBtn" type="button">Clear Selection</button>
+                    </div>
+                </div>
+
+                <div id="exercisePicker"></div>
+
+                <div style="margin-top:20px;">
+                    <div class="card-header-flex" style="margin-bottom:12px;">
+                        <div>
+                            <h2 style="font-size:24px;"><span id="selectedDayName">Monday</span> Workout</h2>
+                            <div class="sub">Exercises you've programmed for this day.</div>
+                        </div>
+                    </div>
+
+                    <div id="myWorkoutList" class="workout-list"></div>
+                </div>
+            </div>
+
+            <div id="builtinWorkoutView" hidden>
+                <div class="quote" style="margin-bottom:18px;">
+                    <div class="quote-header">
+                        <span class="quote-tag">TRAINING PLANS</span>
+                    </div>
+                    <div class="quote-text">Choose a plan that fits your experience and week.</div>
+                    <div class="quote-small">Start with a manageable schedule, use controlled reps, and increase load gradually when your form stays solid.</div>
+                    <div class="quote-small">For rep ranges, build toward the top of the range with good form before adding a small amount of weight. Rest between hard sessions.</div>
+                </div>
+
+                <div class="program-options" id="programOptions" role="group" aria-label="Choose a training program"></div>
+                <div class="program-description" id="programDescription" aria-live="polite"></div>
+                <div class="builtin-days" id="builtinDays"></div>
+                <div class="program-actions">
+                    <p class="sub">Applying a plan replaces your current Monday–Sunday custom routine. Your workout history and nutrition logs are not changed.</p>
+                    <button type="button" class="primary" id="applyBuiltinProgram">
+                        <span>Use This Program</span>
+                        <span class="btn-arrow-circle" aria-hidden="true">→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. EXERCISE LIBRARY -->
+    <section class="panel" id="panel-exercises" role="tabpanel" aria-label="Exercise library">
+        <div class="card">
+            <div class="library-header">
+                <div>
+                    <h2>Exercise Library</h2>
+                    <div class="sub">Comprehensive movement catalog with form cues and video tutorials.</div>
+                </div>
+
+                <div class="library-controls">
+                    <div class="search-input-wrapper">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        <input type="search" id="exerciseSearch" placeholder="Search exercises (e.g. bench, squat)..." autocomplete="off" aria-label="Search exercises">
+                    </div>
+
+                    <div class="select-wrapper">
+                        <select id="exerciseFilter" aria-label="Filter by muscle group">
+                            <option value="all">All Muscle Groups</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="exercise-grid" id="exerciseLibrary"></div>
+    </section>
+
+    <!-- 4. TRACK PROGRESS -->
+    <section class="panel" id="panel-track" role="tabpanel" aria-label="Progress tracking">
+
+        <div class="card track-hero-card">
+            <div class="sub eyebrow-label">TODAY</div>
+            <h2 id="trackExerciseTitle" class="track-hero-title">Strength & Lift Tracker</h2>
+
+            <div class="track-header-icons">
+                <div class="track-icon-pill" title="Activity" aria-label="Activity">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                </div>
+                <div class="track-icon-pill" title="Time and reps" aria-label="Time and reps">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                </div>
+                <div class="track-icon-pill" title="Resistance and calories" aria-label="Resistance and calories">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                </div>
+                <div class="track-icon-pill" title="PR record" aria-label="PR record">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17a2 2 0 0 0-2 2v1h8v-1a2 2 0 0 0-2-2v-2.34"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="track-layout">
+            <div class="card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Today's Session</h2>
+                        <div class="sub">Completion of your programmed workout for today.</div>
+                    </div>
+                    <div class="toggle-pill-switch">
+                        <span class="dot"></span>
+                        <span>Auto mode</span>
+                    </div>
+                </div>
+
+                <div class="dial-gauge-wrapper">
+                    <svg class="dial-svg" viewBox="0 0 240 140" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#ff9aa6"/>
+                                <stop offset="55%" stop-color="#ff5368"/>
+                                <stop offset="100%" stop-color="#e31330"/>
+                            </linearGradient>
+                            <filter id="dialGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="3" result="blur"/>
+                                <feMerge>
+                                    <feMergeNode in="blur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <path d="M 30 120 A 90 90 0 0 1 210 120"
+                              fill="none"
+                              stroke="rgba(255, 255, 255, 0.15)"
+                              stroke-width="12"
+                              stroke-linecap="round"
+                              stroke-dasharray="2, 6"/>
+
+                        <path id="gaugePath"
+                              d="M 30 120 A 90 90 0 0 1 210 120"
+                              fill="none"
+                              stroke="url(#dialGrad)"
+                              stroke-width="12"
+                              stroke-linecap="round"
+                              stroke-dasharray="283"
+                              stroke-dashoffset="141"
+                              filter="url(#dialGlow)"
+                              style="transition: stroke-dashoffset 0.6s var(--ease-out);"/>
+
+                        <circle id="gaugeDot" cx="120" cy="30" r="6" fill="#ff5368" filter="url(#dialGlow)" style="transition: cx 0.6s var(--ease-out), cy 0.6s var(--ease-out);"/>
+                        <circle id="gaugeDotInner" cx="120" cy="30" r="2.5" fill="#ffffff" style="transition: cx 0.6s var(--ease-out), cy 0.6s var(--ease-out);"/>
+                    </svg>
+
+                    <div class="dial-center-box">
+                        <div class="dial-center-val" id="gaugePercentText">0%</div>
+                        <div class="dial-center-sub">Workout</div>
+                    </div>
+                </div>
+
+                <div class="gauge-metrics-row">
+                    <div class="gauge-metric-item">
+                        <div class="gauge-metric-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        </div>
+                        <div>
+                            <div class="gauge-metric-label">Target Reps</div>
+                            <div class="gauge-metric-val" id="gaugeDisplayReps">3 × 10</div>
+                        </div>
+                    </div>
+
+                    <div class="gauge-metric-item">
+                        <div class="gauge-metric-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
+                        </div>
+                        <div>
+                            <div class="gauge-metric-label">Best Lift</div>
+                            <div class="gauge-metric-val" id="gaugeDisplayWeight">Prog. Load</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="smart-toggle-bar">
+                    <div class="toggle-pill-switch">
+                        <span class="dot"></span>
+                        <span>On</span>
+                    </div>
+                    <span class="smart-toggle-copy">Smart PR tracking active</span>
+                </div>
+            </div>
+
+            <div class="card log-card">
+                <div class="card-header">
+                    <div>
+                        <h2>Log A Lift</h2>
+                        <div class="sub">Log working sets, reps, load, and effort. Your best lift is tracked automatically.</div>
+                    </div>
+                    <span class="badge primary-muscle">AUTO PR</span>
+                </div>
+
+                <form class="lift-form" id="liftForm">
+                    <div class="form-field">
+                        <label for="logExercise">Select Exercise</label>
+                        <div class="select-wrapper">
+                            <select id="logExercise" aria-label="Select exercise to log"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label for="logWeight">Load</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="logWeight" placeholder="0" min="0" step="0.5" required aria-label="Weight in kilograms">
+                                <span class="unit-tag">kg</span>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="logReps">Reps per set</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="logReps" placeholder="0" min="1" max="100" step="1" required aria-label="Completed repetitions per set">
+                                <span class="unit-tag">reps</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label for="logSets">Working sets</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="logSets" value="3" min="1" max="20" step="1" required aria-label="Number of working sets">
+                                <span class="unit-tag">sets</span>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="logRpe">Effort (optional)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="logRpe" placeholder="e.g. 8" min="1" max="10" step="0.5" aria-label="Rate of perceived exertion from 1 to 10">
+                                <span class="unit-tag">RPE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="primary full-width" id="logSaveBtn" type="submit">
+                        <span>Log Working Sets</span>
+                        <span class="btn-arrow-circle" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+                </form>
+                <p id="logFeedback" class="auth-message" role="status" aria-live="polite"></p>
+
+                <div class="milestone-note">
+                    <div class="milestone-title">Milestone Intelligence</div>
+                    <p>Every logged lift is cross-checked against your all-time PR records. Beating a previous number instantly triggers a victory overlay.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card history-card">
+            <div class="card-header-flex">
+                <div>
+                    <h2>Lift History</h2>
+                    <div class="sub">Chronological training log with work volume and effort.</div>
+                </div>
+                <button type="button" class="ghost small danger" id="clearHistoryBtn">Clear History</button>
+            </div>
+
+            <div class="table-responsive" id="historyTable"></div>
+        </div>
+    </section>
+
+    <!-- 5. NUTRITION -->
+    <section class="panel" id="panel-nutrition" role="tabpanel" aria-label="Nutrition and food log">
+        <div class="card nutrition-date-card">
+            <div>
+                <div class="eyebrow-label">FOOD & FUEL</div>
+                <h2>Nutrition Tracker</h2>
+                <p class="sub">Log what you eat and review the nutrition values you enter or read from product labels.</p>
+            </div>
+            <div class="nutrition-date-controls">
+                <button type="button" class="ghost small" id="nutritionPreviousDay" aria-label="Previous day">←</button>
+                <label class="sr-only" for="nutritionDate">Nutrition log date</label>
+                <input type="date" id="nutritionDate">
+                <button type="button" class="ghost small" id="nutritionNextDay" aria-label="Next day">→</button>
+            </div>
+        </div>
+
+        <div class="nutrition-summary-grid" id="nutritionSummary" aria-live="polite"></div>
+
+        <div class="nutrition-layout">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2>Daily Targets</h2>
+                        <div class="sub">Set your own calorie and macro targets. These are personal tracking goals, not medical advice.</div>
+                    </div>
+                </div>
+                <form id="nutritionGoalsForm" class="nutrition-goals-form">
+                    <div class="form-field">
+                        <label for="nutritionCaloriesGoal">Calories</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="nutritionCaloriesGoal" min="1" max="20000" step="1" required>
+                            <span class="unit-tag">kcal</span>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="nutritionProteinGoal">Protein</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="nutritionProteinGoal" min="0" max="1000" step="1" required>
+                            <span class="unit-tag">g</span>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="nutritionCarbsGoal">Carbs</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="nutritionCarbsGoal" min="0" max="2000" step="1" required>
+                            <span class="unit-tag">g</span>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="nutritionFatGoal">Fat</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="nutritionFatGoal" min="0" max="1000" step="1" required>
+                            <span class="unit-tag">g</span>
+                        </div>
+                    </div>
+                    <button class="primary nutrition-goal-save" type="submit">Save targets</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2>Log Food</h2>
+                        <div class="sub">Enter nutrition values for the portion you ate.</div>
+                    </div>
+                </div>
+                <form id="foodLogForm" class="nutrition-food-form">
+                    <div class="form-field">
+                        <label for="foodName">Food or drink</label>
+                        <input type="text" id="foodName" maxlength="80" required placeholder="e.g. Greek yogurt">
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label for="foodMeal">Meal</label>
+                            <select id="foodMeal" required>
+                                <option>Breakfast</option>
+                                <option>Lunch</option>
+                                <option>Dinner</option>
+                                <option>Snack</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="foodServing">Portion</label>
+                            <input type="text" id="foodServing" maxlength="50" placeholder="e.g. 1 cup">
+                        </div>
+                    </div>
+                    <div class="nutrition-input-grid">
+                        <div class="form-field">
+                            <label for="foodCalories">Calories</label>
+                            <input type="number" id="foodCalories" min="0" max="20000" step="1" required placeholder="kcal">
+                        </div>
+                        <div class="form-field">
+                            <label for="foodProtein">Protein</label>
+                            <input type="number" id="foodProtein" min="0" max="1000" step="0.1" required placeholder="g">
+                        </div>
+                        <div class="form-field">
+                            <label for="foodCarbs">Carbs</label>
+                            <input type="number" id="foodCarbs" min="0" max="2000" step="0.1" required placeholder="g">
+                        </div>
+                        <div class="form-field">
+                            <label for="foodFat">Fat</label>
+                            <input type="number" id="foodFat" min="0" max="1000" step="0.1" required placeholder="g">
+                        </div>
+                    </div>
+                    <button type="submit" class="primary full-width">Add to food log</button>
+                </form>
+                <p id="nutritionStatus" class="auth-message" role="status" aria-live="polite"></p>
+            </div>
+        </div>
+
+        <div class="card nutrition-recent-card">
+            <div class="card-header">
+                <div>
+                    <h2>Repeat a Recent Food</h2>
+                    <div class="sub">Quick-add one of your recent entries with its saved values.</div>
+                </div>
+            </div>
+            <div id="recentFoods" class="recent-foods-list"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header-flex">
+                <div>
+                    <h2 id="nutritionLogHeading">Food Log</h2>
+                    <div class="sub">Foods grouped by meal for the selected date.</div>
+                </div>
+                <button type="button" class="ghost small danger" id="clearNutritionDay">Clear this day</button>
+            </div>
+            <div id="nutritionMealLog" class="nutrition-meal-log"></div>
+        </div>
+        <p class="nutrition-disclaimer">Nutrition estimates can vary by brand and serving size. Use package labels or a qualified professional for more accurate or individualized guidance.</p>
+    </section>
+
+    <!-- 6. STREAKS -->
+    <section class="panel" id="panel-streaks" role="tabpanel" aria-label="Streaks and consistency">
+        <div class="streaks-layout">
+            <div class="card streak-card">
+                <div class="card-header">
+                    <div>
+                        <h2>Training Streak</h2>
+                        <div class="sub">Stay consistent and keep the streak alive.</div>
+                    </div>
+                </div>
+
+                <div class="streak-hero-box">
+                    <div class="streak-glow-circle">
+                        <div class="streak-num" id="streakNum">0</div>
+                        <div class="streak-unit">CONSECUTIVE DAYS</div>
+                    </div>
+
+                    <div class="week-grid-container">
+                        <div class="week-grid-label">LAST 7 DAYS ACTIVITY</div>
+                        <div id="weekGrid" class="week-grid"></div>
+                    </div>
+
+                    <button class="primary" id="markTodayBtn" type="button">
+                        <span>Mark Today As Trained</span>
+                        <span class="btn-arrow-circle" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card goal-card">
+                <div class="card-header">
+                    <div>
+                        <h2>Weekly Training Goal</h2>
+                        <div class="sub">How many days do you commit to train each week?</div>
+                    </div>
+                </div>
+
+                <div class="goal-content">
+                    <p class="goal-desc">Select your target training frequency:</p>
+                    <div id="dayPicker" class="day-picker-grid"></div>
+
+                    <div class="goal-progress">
+                        <div class="goal-progress-top">
+                            <span>This week</span>
+                            <span id="goalProgressText">0 / 5 days</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-fill" id="goalProgressFill" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="goal-feedback-card">
+                        <div class="goal-feedback-label">PRO PRINCIPLE</div>
+                        <p>Consistency compounds. 3–5 dedicated sessions per week deliver optimal muscular recovery, neuromuscular adaptation, and sustainable progress.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. FEEDBACK -->
+    <section class="panel" id="panel-feedback" role="tabpanel" aria-label="Feedback">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2>Share Your Feedback</h2>
+                    <div class="sub">Help us improve YAO Fitness. Tell us what you love, what's broken, or what you'd like to see next.</div>
+                </div>
+            </div>
+
+            <form id="feedbackForm" class="feedback-form" autocomplete="off">
+                <label for="feedbackName">Name <span class="optional-tag">(optional)</span></label>
+                <input id="feedbackName" type="text" placeholder="Your name">
+
+                <label for="feedbackEmail">Email <span class="optional-tag">(optional)</span></label>
+                <input id="feedbackEmail" type="email" placeholder="you@example.com">
+
+                <label id="feedbackRatingLabel">How would you rate your experience?</label>
+                <div class="feedback-rating" id="feedbackRating" role="radiogroup" aria-labelledby="feedbackRatingLabel">
+                    <button type="button" class="rating-star" data-value="1" aria-label="1 star" aria-pressed="false">★</button>
+                    <button type="button" class="rating-star" data-value="2" aria-label="2 stars" aria-pressed="false">★</button>
+                    <button type="button" class="rating-star" data-value="3" aria-label="3 stars" aria-pressed="false">★</button>
+                    <button type="button" class="rating-star" data-value="4" aria-label="4 stars" aria-pressed="false">★</button>
+                    <button type="button" class="rating-star" data-value="5" aria-label="5 stars" aria-pressed="false">★</button>
+                </div>
+
+                <label for="feedbackCategory">Category</label>
+                <select id="feedbackCategory">
+                    <option value="general">General Feedback</option>
+                    <option value="feature">Feature Request</option>
+                    <option value="bug">Bug Report</option>
+                    <option value="design">Design / UI</option>
+                    <option value="exercises">Exercises / Content</option>
+                    <option value="other">Other</option>
+                </select>
+
+                <label for="feedbackMessage">Your Message <span style="color:var(--danger);">*</span></label>
+                <textarea id="feedbackMessage" rows="5" required placeholder="What's on your mind? Share suggestions, report issues, or tell us what you enjoy…"></textarea>
+
+                <button class="primary full-width" type="submit">
+                    <span>Submit Feedback</span>
+                    <span class="btn-arrow-circle" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </span>
+                </button>
+            </form>
+
+            <p id="feedbackStatus" class="feedback-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="card" id="feedbackHistoryCard" hidden>
+            <div class="card-header">
+                <div>
+                    <h2>Your Feedback History</h2>
+                    <div class="sub">All your submitted feedback is saved locally on this device.</div>
+                </div>
+                <button type="button" class="ghost small" id="clearFeedbackBtn">Clear All</button>
+            </div>
+            <div id="feedbackList" class="feedback-list"></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-sync-indicator">
+            <span class="footer-sync-dot"></span>
+            <span>Fitness YAO · Progress saved automatically on this device</span>
+        </div>
+    </footer>
+
+</div>
+
+<div class="overlay" id="overlay" aria-hidden="true"></div>
+
+<div class="pr-message" id="prMessage" role="dialog" aria-modal="true" aria-labelledby="prModalTitle" aria-hidden="true">
+    <div class="pr-icon" aria-hidden="true">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17a2 2 0 0 0-2 2v1h8v-1a2 2 0 0 0-2-2v-2.34"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+    </div>
+    <h2 id="prModalTitle">NEW PR!</h2>
+    <p id="prText">You just beat your previous record. Keep going.</p>
+    <button class="primary" type="button" onclick="closePR()">
+        <span>LET'S GO</span>
+        <span class="btn-arrow-circle" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+    </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js" defer></script>
+</body>
+</html>

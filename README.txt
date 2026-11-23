@@ -12,6 +12,7 @@ Double-click START-YAO-FITNESS.bat
 PUBLIC WEBSITE
 The free public website is hosted on GitHub Pages:
 https://yao-ui21.github.io/Yao/
+Updates publish automatically from the main branch.
 
 The website saves workout and nutrition data in this browser only. Data does not
 sync between devices or browsers, and cloud accounts are not enabled there.

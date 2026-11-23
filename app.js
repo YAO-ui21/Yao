@@ -3719,12 +3719,14 @@ function setAuthMode(mode){
     const signInModeButton = document.getElementById("signInModeButton");
     const signUpModeButton = document.getElementById("signUpModeButton");
     const authPassword = document.getElementById("authPassword");
+    const resendConfirmationButton = document.getElementById("resendConfirmationButton");
 
     if(authTitle) authTitle.textContent = mode === "signup" ? "Create account" : "Sign in";
     if(authSubmitButton) authSubmitButton.textContent = mode === "signup" ? "Create account" : "Sign in";
     if(signInModeButton) signInModeButton.setAttribute("aria-pressed", String(mode === "signin"));
     if(signUpModeButton) signUpModeButton.setAttribute("aria-pressed", String(mode === "signup"));
     if(authPassword) authPassword.autocomplete = mode === "signup" ? "new-password" : "current-password";
+    if(resendConfirmationButton) resendConfirmationButton.hidden = true;
     setAuthMessage("");
 }
 
@@ -3750,6 +3752,8 @@ async function handleAuthFormSubmit(event){
     }
 
     submitButton.disabled = true;
+    const resendConfirmationButton = document.getElementById("resendConfirmationButton");
+    if(resendConfirmationButton) resendConfirmationButton.hidden = true;
     setAuthMessage(authMode === "signup" ? "Creating your account..." : "Signing in...");
 
     try{
@@ -3765,7 +3769,8 @@ async function handleAuthFormSubmit(event){
         if(result.error) throw result.error;
 
         if(authMode === "signup" && !result.data.session){
-            setAuthMessage("Check your email to confirm your account, then sign in.");
+            if(resendConfirmationButton) resendConfirmationButton.hidden = false;
+            setAuthMessage("Check your email to confirm your account. If the link opens a 404, request a fresh one here.");
             return;
         }
 
@@ -3777,9 +3782,50 @@ async function handleAuthFormSubmit(event){
             setAuthMessage("Check your email to confirm your account, then sign in.");
         }
     }catch(error){
-        setAuthMessage(error.message || "Authentication failed.", true);
+        const message = error?.message || "Authentication failed.";
+        if(error?.code === "email_not_confirmed" || /email.*not confirmed/i.test(message)){
+            if(resendConfirmationButton) resendConfirmationButton.hidden = false;
+            setAuthMessage("Confirm your email before signing in. You can request a fresh confirmation link below.", true);
+        }else{
+            setAuthMessage(message, true);
+        }
     }finally{
         submitButton.disabled = false;
+    }
+}
+
+async function resendConfirmationEmail(){
+    const emailField = document.getElementById("authEmailInput");
+    const resendButton = document.getElementById("resendConfirmationButton");
+    const email = emailField?.value.trim();
+
+    if(!email){
+        setAuthMessage("Enter your email address first.", true);
+        emailField?.focus();
+        return;
+    }
+
+    if(!supabaseClient){
+        setAuthMessage("Supabase is not configured. Please try again later.", true);
+        return;
+    }
+
+    if(resendButton) resendButton.disabled = true;
+    setAuthMessage("Sending a fresh confirmation email...");
+
+    try{
+        const { error } = await supabaseClient.auth.resend({
+            type: "signup",
+            email,
+            options: { emailRedirectTo: getAuthRedirectUrl() }
+        });
+
+        if(error) throw error;
+        setAuthMessage(`A fresh confirmation link was sent to ${email}. Open the newest email to finish signing in.`);
+    }catch(error){
+        setAuthMessage(error?.message || "Could not resend the confirmation email. Please try again.", true);
+    }finally{
+        if(resendButton) resendButton.disabled = false;
     }
 }
 
@@ -3820,11 +3866,13 @@ async function initializeSupabaseAuth(){
     const authForm = document.getElementById("authForm");
     const signInModeButton = document.getElementById("signInModeButton");
     const signUpModeButton = document.getElementById("signUpModeButton");
+    const resendConfirmationButton = document.getElementById("resendConfirmationButton");
     const signOutButton = document.getElementById("signOutButton");
 
     if(authForm) authForm.addEventListener("submit", handleAuthFormSubmit);
     if(signInModeButton) signInModeButton.addEventListener("click", () => setAuthMode("signin"));
     if(signUpModeButton) signUpModeButton.addEventListener("click", () => setAuthMode("signup"));
+    if(resendConfirmationButton) resendConfirmationButton.addEventListener("click", resendConfirmationEmail);
     if(signOutButton) signOutButton.addEventListener("click", async () => {
         if(!supabaseClient) {
             window.location.reload();

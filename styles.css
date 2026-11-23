@@ -2624,6 +2624,10 @@ textarea:focus {
     gap: 12px;
 }
 
+.auth-resend-button {
+    margin-top: 10px;
+}
+
 .auth-form label {
     font-size: 12px;
     font-weight: 700;

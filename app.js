@@ -3800,7 +3800,7 @@ async function initializeSupabaseAuth(){
     if(isGitHubPages()){
         const accountButton = document.getElementById("openAuthModalBtn");
         const tagline = document.querySelector(".tagline");
-        if(accountButton) accountButton.hidden = true;
+        if(accountButton) accountButton.remove();
         if(tagline) tagline.textContent = "Free web edition · Your workouts and food logs are saved in this browser only.";
         loadInitialState();
         return;

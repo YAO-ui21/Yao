@@ -3759,7 +3759,13 @@ async function handleAuthFormSubmit(event){
             return;
         }
 
-        setAuthMessage("Signed in. Loading your data...");
+        if(result.data.session?.user){
+            document.body.classList.remove("locked-auth");
+            document.body.classList.add("authenticated");
+            await loadAuthenticatedState(result.data.session.user);
+        }else{
+            setAuthMessage("Check your email to confirm your account, then sign in.");
+        }
     }catch(error){
         setAuthMessage(error.message || "Authentication failed.", true);
     }finally{
@@ -3780,6 +3786,10 @@ async function loadAuthenticatedState(user){
 
     if(error){
         console.error("Could not load fitness data from Supabase.", error);
+        const authGate = document.getElementById("authGate");
+        if(authGate) authGate.hidden = false;
+        document.body.classList.remove("authenticated");
+        document.body.classList.add("locked-auth");
         setAuthMessage("Could not load your data. Check the Supabase table and RLS setup.", true);
         return;
     }
@@ -3797,15 +3807,6 @@ async function loadAuthenticatedState(user){
 }
 
 async function initializeSupabaseAuth(){
-    if(isGitHubPages()){
-        const accountButton = document.getElementById("openAuthModalBtn");
-        const tagline = document.querySelector(".tagline");
-        if(accountButton) accountButton.remove();
-        if(tagline) tagline.textContent = "Free web edition · Your workouts and food logs are saved in this browser only.";
-        loadInitialState();
-        return;
-    }
-
     const authForm = document.getElementById("authForm");
     const signInModeButton = document.getElementById("signInModeButton");
     const signUpModeButton = document.getElementById("signUpModeButton");
@@ -3828,17 +3829,33 @@ async function initializeSupabaseAuth(){
         window.location.reload();
     });
 
+    let hasSupabaseConfig = false;
     try{
-        const configResponse = await fetch("/api/config", { cache: "no-store" });
-        const config = await configResponse.json();
-        if(!config.configured || !config.url || !config.anonKey) {
-            throw new Error(config.error || "Supabase is not configured.");
+        let config = window.YAO_SUPABASE_CONFIG;
+        if(!config?.url && !config?.anonKey && !isGitHubPages()){
+            const configResponse = await fetch("/api/config", { cache: "no-store" });
+            if(!configResponse.ok) throw new Error("Could not load backend configuration.");
+            config = await configResponse.json();
+        }
+
+        hasSupabaseConfig = Boolean(config?.url || config?.anonKey || config?.configured);
+        if(!config?.url || !config?.anonKey){
+            if(hasSupabaseConfig) throw new Error("Supabase URL and public anon key are both required.");
+            if(isGitHubPages()){
+                const accountButton = document.getElementById("openAuthModalBtn");
+                const tagline = document.querySelector(".tagline");
+                if(accountButton) accountButton.remove();
+                if(tagline) tagline.textContent = "Free web edition · Your workouts and food logs are saved in this browser only.";
+            }
+            loadInitialState();
+            return;
         }
 
         if(!window.supabase?.createClient) {
             throw new Error("Supabase client library did not load.");
         }
 
+        hasSupabaseConfig = true;
         supabaseClient = window.supabase.createClient(config.url, config.anonKey);
         const { data, error } = await supabaseClient.auth.getSession();
         if(error) throw error;
@@ -3858,12 +3875,20 @@ async function initializeSupabaseAuth(){
         document.body.classList.add("locked-auth");
         setAuthMessage("Sign in to access your personal training data.");
     }catch(error){
-        console.warn("Supabase is unavailable, using local mode.", error);
         const authGate = document.getElementById("authGate");
-        if(authGate) authGate.hidden = true;
-        document.body.classList.remove("locked-auth");
-        document.body.classList.add("authenticated");
-        loadInitialState();
+        if(hasSupabaseConfig){
+            console.error("Could not initialize Supabase.", error);
+            if(authGate) authGate.hidden = false;
+            document.body.classList.remove("authenticated");
+            document.body.classList.add("locked-auth");
+            setAuthMessage("Cloud backend connection failed. Check the Supabase URL, public key, and site settings, then reload.", true);
+        }else{
+            console.warn("Supabase is unavailable, using local mode.", error);
+            if(authGate) authGate.hidden = true;
+            document.body.classList.remove("locked-auth");
+            document.body.classList.add("authenticated");
+            loadInitialState();
+        }
     }
 }
 

@@ -14,9 +14,22 @@ The free public website is hosted on GitHub Pages:
 https://yao-ui21.github.io/Yao/
 Updates publish automatically from the main branch.
 
-The website saves workout and nutrition data in this browser only. Data does not
-sync between devices or browsers, and cloud accounts are not enabled there.
-Use the local backend setup above for local server persistence.
+BACKEND AND CLOUD ACCOUNTS
+The website can use Supabase's free tier for email/password accounts and private
+per-user cloud saves:
+1. Create a Supabase project at https://supabase.com/dashboard.
+2. In the project's SQL Editor, run the contents of supabase/rls.sql.
+3. In Project Settings > API, copy the Project URL and public anon/publishable key.
+4. Put those two values in supabase-config.js as url and anonKey.
+   The anon/publishable key is intended for browser use. Never put a service_role
+   or secret key in this file.
+5. In Supabase Authentication > URL Configuration, set the Site URL to
+   https://yao-ui21.github.io/Yao and allow that URL as a redirect URL.
+6. Commit and push supabase-config.js to main. GitHub Pages deploys the update.
+
+Until Supabase is configured, the website saves data in this browser only. Once
+cloud accounts are enabled, each signed-in account's workout and nutrition data
+is saved separately and can be accessed across devices.
 
 If PowerShell says npm.ps1 is blocked, use Command Prompt (cmd.exe), not PowerShell.
 

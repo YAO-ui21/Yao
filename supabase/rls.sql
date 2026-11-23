@@ -6,6 +6,11 @@ create table if not exists public.fitness_state (
 
 alter table public.fitness_state enable row level security;
 
+drop policy if exists "Users can read their own state" on public.fitness_state;
+drop policy if exists "Users can insert their own state" on public.fitness_state;
+drop policy if exists "Users can update their own state" on public.fitness_state;
+drop policy if exists "Users can delete their own state" on public.fitness_state;
+
 create policy "Users can read their own state"
   on public.fitness_state for select
   using (auth.uid() = user_id);

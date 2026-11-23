@@ -1083,6 +1083,11 @@ function isGitHubPages(){
     return window.location.hostname.endsWith(".github.io");
 }
 
+function getAuthRedirectUrl(){
+    const appPath = isGitHubPages() ? "/Yao/" : "/";
+    return new URL(appPath, window.location.origin).href;
+}
+
 async function loadInitialState(){
     document.body.classList.remove("locked-auth");
     document.body.classList.add("authenticated");
@@ -3748,8 +3753,13 @@ async function handleAuthFormSubmit(event){
     setAuthMessage(authMode === "signup" ? "Creating your account..." : "Signing in...");
 
     try{
+        const redirectTo = getAuthRedirectUrl();
         const result = authMode === "signup"
-            ? await supabaseClient.auth.signUp({ email, password })
+            ? await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: { emailRedirectTo: redirectTo }
+            })
             : await supabaseClient.auth.signInWithPassword({ email, password });
 
         if(result.error) throw result.error;
